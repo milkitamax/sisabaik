@@ -4,31 +4,49 @@
 
 SisaBaik merupakan aplikasi untuk membantu penyedia menawarkan makanan berlebih yang masih layak dikonsumsi. Backend menggunakan REST API dengan Node.js, Express.js, dan PostgreSQL.
 
-Proyek ini menggunakan data fiktif untuk praktikum lokal dan belum ditujukan sebagai layanan transaksi publik.
+Aplikasi menerapkan autentikasi, otorisasi berdasarkan peran, dan pembatasan akses berdasarkan kepemilikan data.
+
+Proyek menggunakan data fiktif untuk praktikum lokal dan belum ditujukan sebagai layanan transaksi publik.
 
 ## 2. Teknologi dan Persiapan
 
-Teknologi:
+Teknologi yang digunakan:
+
 - Node.js
 - Express.js
 - PostgreSQL
 - JavaScript
+- bcryptjs
+- JSON Web Token (JWT)
+- express-rate-limit
+- Helmet
 
-Persiapan:
+Persiapan sebelum menjalankan aplikasi:
+
 1. Pastikan Node.js dan PostgreSQL sudah terpasang.
-2. Siapkan konfigurasi database pada `.env` berdasarkan `.env.example`.
-3. Instal dependensi menggunakan `npm install`.
-4. Jalankan server menggunakan `npm run dev`.
+2. Siapkan konfigurasi database dan JWT pada file `.env` berdasarkan `.env.example`.
+3. Instal dependensi menggunakan perintah:
 
-Jangan membagikan file `.env` karena berisi konfigurasi lokal.
+   ```bash
+   npm install
+   ```
+
+4. Jalankan migrasi autentikasi `database/07_auth.sql` pada database pengembangan.
+5. Jalankan server menggunakan:
+
+   ```bash
+   npm run dev
+   ```
+
+Jangan membagikan file `.env` karena berisi konfigurasi rahasia.
 
 ## 3. Base URL dan Format Response
 
-Base URL:
+Base URL aplikasi:
 
 `http://localhost:3000`
 
-Response berhasil menggunakan format:
+Response berhasil:
 
 ```json
 {
@@ -37,7 +55,7 @@ Response berhasil menggunakan format:
 }
 ```
 
-Response gagal menggunakan format:
+Response gagal:
 
 ```json
 {
@@ -49,7 +67,7 @@ Response gagal menggunakan format:
 }
 ```
 
-Response koleksi dilengkapi metadata:
+Response koleksi dilengkapi metadata paginasi:
 
 ```json
 {
@@ -64,204 +82,312 @@ Response koleksi dilengkapi metadata:
 }
 ```
 
-`meta.jumlah` menunjukkan jumlah seluruh data yang sesuai dengan filter, bukan hanya jumlah data pada halaman saat ini.
+`meta.jumlah` menunjukkan jumlah data yang sesuai dengan filter dan cakupan akses pengguna.
 
-## 4. Endpoint Health Check
+## 4. Autentikasi
 
-### GET `/api/health`
+Autentikasi menggunakan JSON Web Token (JWT). Endpoint privat memerlukan header berikut:
 
-Memeriksa status API dan koneksi database.
+```http
+Authorization: Bearer <accessToken>
+```
 
-Response berhasil:
-- `200 OK`
+### 4.1 Registrasi Pembeli
 
-## 5. Endpoint Penawaran
+- Method: `POST`
+- Endpoint: `/api/auth/registrasi`
 
-| Method | Endpoint | Fungsi |
-|---|---|---|
-| GET | `/api/penawaran` | Mengambil daftar penawaran |
-| GET | `/api/penawaran/:id` | Mengambil detail penawaran |
-| POST | `/api/penawaran` | Membuat penawaran |
-| PUT | `/api/penawaran/:id` | Mengubah seluruh atribut penawaran yang dapat diedit |
-| DELETE | `/api/penawaran/:id` | Menghapus penawaran jika tidak memiliki riwayat pesanan |
+Digunakan untuk mendaftarkan pengguna sebagai pembeli.
 
-### 5.1 GET Daftar Penawaran
+### 4.2 Registrasi Penyedia
 
-`GET /api/penawaran`
+- Method: `POST`
+- Endpoint: `/api/auth/registrasi-penyedia`
 
-Mendukung pencarian, filter, dan paginasi.
+Digunakan untuk mendaftarkan pengguna sebagai penyedia beserta profil usaha.
+
+Penyedia baru memiliki status verifikasi `menunggu` sampai disetujui pengelola.
+
+### 4.3 Login
+
+- Method: `POST`
+- Endpoint: `/api/auth/login`
+
+Digunakan untuk memverifikasi email dan kata sandi, kemudian menerbitkan access token.
+
+### 4.4 Informasi Pengguna
+
+- Method: `GET`
+- Endpoint: `/api/auth/saya`
+
+Digunakan untuk mengambil informasi akun yang sedang login berdasarkan token.
+
+### 4.5 Logout
+
+- Method: `POST`
+- Endpoint: `/api/auth/logout`
+
+Digunakan untuk mengakhiri sesi dengan mencabut versi token pengguna. Token versi lama tidak dapat digunakan kembali.
+
+## 5. Endpoint Health Check
+
+### 5.1 Memeriksa Kesehatan API
+
+- Method: `GET`
+- Endpoint: `/api/health`
+
+Digunakan untuk memeriksa status API dan koneksi database.
+
+Response berhasil menggunakan status `200 OK`.
+
+## 6. Endpoint Penawaran
+
+Endpoint penawaran digunakan untuk melihat dan mengelola informasi makanan yang ditawarkan oleh penyedia.
+
+### 6.1 Melihat Katalog Penawaran
+
+- Method: `GET`
+- Endpoint: `/api/penawaran`
+
+Digunakan untuk mengambil katalog publik dengan pencarian, filter, dan paginasi.
 
 Parameter yang tersedia:
-- `q`: mencari berdasarkan kata kunci.
-- `kategori`: memfilter kategori.
-- `status`: memfilter status penawaran.
-- `tersedia`: memfilter ketersediaan.
+
+- `q`: pencarian kata kunci.
+- `kategori`: filter kategori.
+- `status`: filter status penawaran.
+- `tersedia`: filter ketersediaan.
 - `page`: menentukan halaman.
 - `limit`: menentukan jumlah data per halaman.
 
-Contoh:
+### 6.2 Melihat Detail Penawaran
 
-`GET /api/penawaran?q=nasi&tersedia=true&page=1&limit=10`
+- Method: `GET`
+- Endpoint: `/api/penawaran/:id`
 
-Parameter dapat digabungkan sesuai kebutuhan.
+Digunakan untuk mengambil detail penawaran berdasarkan ID.
 
-### 5.2 POST Penawaran
+### 6.3 Membuat Penawaran
 
-`POST /api/penawaran`
+- Method: `POST`
+- Endpoint: `/api/penawaran`
 
-Digunakan untuk membuat penawaran baru. Data dikirim dalam format JSON sesuai field yang diwajibkan API.
+Digunakan untuk membuat penawaran baru oleh penyedia yang sudah terverifikasi.
 
-Response berhasil:
-- `201 Created`
-- Menyertakan data penawaran dan header `Location`.
+Identitas penyedia ditentukan oleh server melalui token, bukan dipilih oleh pengguna melalui request.
 
-### 5.3 PUT Penawaran
+Response berhasil: `201 Created`.
 
-`PUT /api/penawaran/:id`
+### 6.4 Memperbarui Penawaran
 
-Digunakan untuk mengganti seluruh atribut penawaran yang dapat diedit.
+- Method: `PUT`
+- Endpoint: `/api/penawaran/:id`
 
-Field yang digunakan:
-- `penyediaId`
-- `nama`
-- `kategori`
-- `hargaNormal`
-- `hargaPenawaran`
-- `stok`
-- `satuan`
-- `status`
-- `berakhirPada`
+Digunakan untuk memperbarui penawaran milik penyedia yang sedang login.
 
-Semua field yang diwajibkan harus dikirim. ID dan waktu pembuatan tidak dikirim oleh client. Penyedia pemilik penawaran tidak dapat diganti.
+Penyedia hanya dapat mengubah penawaran miliknya sendiri. Identitas pemilik tidak dapat diganti melalui input client.
 
-### 5.4 DELETE Penawaran
+Response berhasil: `200 OK`.
 
-`DELETE /api/penawaran/:id`
+### 6.5 Menghapus Penawaran
 
-Penawaran dapat dihapus jika tidak memiliki riwayat pesanan.
+- Method: `DELETE`
+- Endpoint: `/api/penawaran/:id`
 
-Penawaran yang sudah digunakan dalam transaksi akan ditolak dengan `409 Conflict` agar riwayat transaksi tetap terjaga.
+Digunakan untuk menghapus penawaran milik penyedia yang sedang login.
 
-Response berhasil:
-- `204 No Content`
-- Tidak memiliki response body.
+Penawaran yang memiliki riwayat pesanan tidak dapat dihapus.
 
-## 6. Endpoint Pesanan
+Response berhasil: `204 No Content`.
 
-| Method | Endpoint | Fungsi |
-|---|---|---|
-| GET | `/api/pesanan` | Mengambil daftar pesanan |
-| GET | `/api/pesanan/:id` | Mengambil detail pesanan |
-| POST | `/api/pesanan` | Membuat pesanan |
+Jika terdapat riwayat pesanan, API mengembalikan `409 Conflict`.
 
-### 6.1 GET Daftar Pesanan
+### 6.6 Melihat Penawaran Milik Saya
 
-`GET /api/pesanan`
+- Method: `GET`
+- Endpoint: `/api/penawaran/milik-saya`
 
-Mengambil koleksi ringkasan pesanan dengan metadata paginasi.
+Digunakan untuk mengambil daftar penawaran milik penyedia yang sedang login.
 
-### 6.2 GET Detail Pesanan
+Endpoint memerlukan autentikasi dan status penyedia terverifikasi.
 
-`GET /api/pesanan/:id`
+## 7. Endpoint Pesanan
 
-Mengambil informasi header pesanan dan detail item pesanan.
+Endpoint pesanan digunakan untuk membuat dan melihat transaksi sesuai hak akses pengguna.
 
-### 6.3 POST Pesanan
+### 7.1 Melihat Daftar Pesanan
 
-`POST /api/pesanan`
+- Method: `GET`
+- Endpoint: `/api/pesanan`
 
-Membuat pesanan baru menggunakan data JSON.
+Digunakan untuk mengambil daftar pesanan sesuai identitas dan peran pengguna yang login.
 
-Field pesanan:
-- `emailPembeli`: email pembeli.
-- `penawaranId`: ID penawaran yang dipesan.
-- `kuantitas`: jumlah makanan yang dipesan.
+Pembeli hanya dapat melihat pesanannya sendiri. Penyedia hanya dapat melihat pesanan yang ditujukan kepada usahanya.
 
-Contoh:
+### 7.2 Melihat Detail Pesanan
 
-```json
-{
-  "emailPembeli": "pembeli@example.com",
-  "penawaranId": "17",
-  "kuantitas": 1
-}
-```
+- Method: `GET`
+- Endpoint: `/api/pesanan/:id`
 
-ID penawaran dikirim sebagai string. Contoh ID tersebut hanya ilustrasi.
+Digunakan untuk mengambil informasi pesanan dan detail item jika pengguna memiliki hak akses terhadap pesanan tersebut.
+
+### 7.3 Membuat Pesanan
+
+- Method: `POST`
+- Endpoint: `/api/pesanan`
+
+Digunakan oleh pembeli yang sudah login untuk membuat pesanan.
+
+Body request menggunakan field `items`. Identitas pembeli diperoleh dari token, bukan dari `emailPembeli` yang dikirim client.
 
 Ketentuan pemesanan:
+
 - Stok harus mencukupi.
 - Pesanan harus berasal dari satu penyedia.
 - Harga disimpan sebagai snapshot saat transaksi.
-- Perubahan harga penawaran setelah transaksi tidak mengubah harga pesanan sebelumnya.
+- Perubahan harga penawaran tidak mengubah harga pesanan sebelumnya.
 - Proses pesanan menggunakan transaksi database.
-- Jika proses gagal, transaksi dibatalkan agar tidak terjadi perubahan data sebagian.
+- Stok dikunci selama proses transaksi untuk menjaga konsistensi.
+- Jika proses gagal, transaksi dibatalkan.
 
-Response berhasil:
-- `201 Created`
-- Menyertakan data pesanan dan header `Location`.
+Response berhasil: `201 Created`.
 
-## 7. Kode Status HTTP
+## 8. Peran dan Otorisasi
 
-| Status | Keterangan |
-|---|---|
-| 200 | Request berhasil |
-| 201 | Resource berhasil dibuat |
-| 204 | Berhasil tanpa response body |
-| 400 | Input atau parameter tidak valid |
-| 404 | Resource tidak ditemukan |
-| 409 | Terjadi konflik aturan bisnis |
-| 413 | Ukuran request terlalu besar |
-| 415 | Format Content-Type tidak didukung |
-| 500 | Terjadi kesalahan server |
+SisaBaik memiliki dua peran pengguna.
 
-## 8. Validasi dan Keamanan
+### 8.1 Pembeli
 
-API menerapkan beberapa perlindungan:
+Pembeli memiliki hak untuk:
+
+- Melihat katalog publik.
+- Membuat pesanan.
+- Melihat pesanan miliknya sendiri.
+
+### 8.2 Penyedia
+
+Penyedia memiliki hak untuk:
+
+- Melihat katalog publik.
+- Mengelola penawaran miliknya setelah terverifikasi.
+- Melihat pesanan yang ditujukan kepada usahanya.
+
+Pemeriksaan akses dilakukan pada server melalui middleware dan pembatasan query berdasarkan kepemilikan data.
+
+Pengguna tidak dapat menentukan sendiri peran, identitas pembeli, identitas penyedia, atau status verifikasi melalui request bisnis.
+
+## 9. Kode Status HTTP
+
+API menggunakan beberapa kode status HTTP berikut:
+
+- `200 OK`: Request berhasil.
+- `201 Created`: Resource berhasil dibuat.
+- `204 No Content`: Request berhasil tanpa response body.
+- `400 Bad Request`: Input atau parameter tidak valid.
+- `401 Unauthorized`: Autentikasi tidak tersedia atau tidak valid.
+- `403 Forbidden`: Pengguna tidak memiliki izin.
+- `404 Not Found`: Resource tidak ditemukan atau tidak dapat diakses.
+- `409 Conflict`: Terjadi konflik aturan bisnis.
+- `413 Payload Too Large`: Ukuran request terlalu besar.
+- `415 Unsupported Media Type`: Format Content-Type tidak didukung.
+- `429 Too Many Requests`: Batas request terlampaui.
+- `500 Internal Server Error`: Terjadi kesalahan server.
+
+Beberapa kode error yang digunakan:
+
+- `AUTH_REQUIRED`
+- `TOKEN_INVALID`
+- `TOKEN_EXPIRED`
+- `SESSION_REVOKED`
+- `LOGIN_FAILED`
+- `ROLE_FORBIDDEN`
+- `PROVIDER_NOT_VERIFIED`
+- `AUTH_RATE_LIMIT`
+- `REGISTRATION_RATE_LIMIT`
+- `REFERENCE_CONFLICT`
+
+## 10. Validasi dan Keamanan
+
+API menerapkan beberapa mekanisme validasi dan keamanan:
+
 - Validasi path parameter dan query parameter.
 - Validasi format JSON dan tipe data.
 - Validasi nilai harga, stok, status, dan waktu.
+- Hash kata sandi menggunakan bcrypt.
+- Verifikasi token JWT pada server.
+- Pemeriksaan peran dan kepemilikan data.
+- Pembatasan laju login dan pendaftaran.
 - Query PostgreSQL menggunakan parameter.
-- Transaksi database menggunakan mekanisme rollback ketika proses gagal.
-- Penanganan kesalahan menggunakan format response yang konsisten.
-- File `.env` tidak boleh diunggah ke repositori publik.
+- Transaksi database dengan mekanisme rollback.
+- Pencabutan sesi melalui versi token.
+- Penanganan kesalahan dengan format response konsisten.
 
-API ini belum dilengkapi autentikasi dan otorisasi sehingga hanya digunakan untuk praktikum lokal.
+Batas login adalah 20 request dalam 15 menit. Batas pendaftaran adalah 50 request dalam 15 menit. Kedua pembatas memiliki penghitung terpisah.
 
-## 9. Pengujian API
+## 11. Verifikasi Penyedia
 
-Jalankan server:
+Pengelola dapat meninjau dan mengubah status verifikasi penyedia melalui script operator.
+
+Untuk memverifikasi penyedia:
+
+```bash
+npm run penyedia:verifikasi -- email@example.test
+```
+
+Untuk menolak penyedia:
+
+```bash
+npm run penyedia:verifikasi -- email@example.test --tolak
+```
+
+Pengguna tidak dapat menyetujui atau mengubah status verifikasi usahanya sendiri melalui API.
+
+## 12. Pengujian API
+
+Jalankan server menggunakan:
 
 ```bash
 npm run dev
 ```
 
-Jalankan pengujian otomatis:
+Periksa koneksi database menggunakan:
 
 ```bash
-npm run api:test
+npm run db:check
 ```
 
-Pengujian dapat membuat, mengubah, atau menghapus data. Gunakan database pengembangan dan periksa dampaknya setelah pengujian.
-
-Pengujian konkurensi:
+Jalankan pengujian autentikasi dan otorisasi Chapter 8:
 
 ```bash
-node scripts/uji-konkurensi.js
+npm run auth:test
 ```
 
-Pengujian konkurensi digunakan untuk memastikan dua pesanan yang masuk secara bersamaan tidak dapat mengambil stok yang sama melebihi jumlah tersedia.
+Pengujian menggunakan database pengembangan dan membuat data uji baru. Gunakan database lokal dan data fiktif.
 
-Hasil aktual pengujian dicatat dalam:
+Script lama Chapter 7 dapat dijalankan menggunakan:
+
+```bash
+npm run api:test:chapter7
+```
+
+Script tersebut menggunakan kontrak sebelum autentikasi sehingga bukan pengujian API untuk Chapter 8.
+
+Hasil pengujian Chapter 7 dicatat dalam:
 
 `docs/hasil-uji-chapter7.md`
 
-## 10. Struktur Alur API
+Hasil pengujian Chapter 8 dicatat dalam:
+
+`docs/hasil-uji-chapter8.md`
+
+## 13. Struktur Alur API
 
 Alur request secara umum:
 
 1. Router menerima request berdasarkan method dan URL.
-2. Controller membaca input dan menjalankan validasi.
-3. Repository menjalankan query ke PostgreSQL.
-4. Service mengatur aturan bisnis dan transaksi pesanan.
-5. API mengirim response kepada client.
+2. Middleware memeriksa autentikasi dan token jika endpoint privat.
+3. Middleware memeriksa peran dan status verifikasi jika diperlukan.
+4. Controller membaca input dan menjalankan validasi.
+5. Service menjalankan aturan bisnis.
+6. Repository menjalankan query ke PostgreSQL.
+7. API mengirim response kepada client.

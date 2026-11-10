@@ -1,64 +1,191 @@
 # SisaBaik REST API
 
-## Deskripsi
-SisaBaik merupakan proyek aplikasi untuk membantu penyedia menawarkan makanan berlebih yang masih layak dikonsumsi. Proyek ini menggunakan REST API yang terintegrasi dengan PostgreSQL.
+## 1. Deskripsi
 
-## Teknologi
-- Node.js
-- Express.js
+SisaBaik merupakan aplikasi yang membantu penyedia menawarkan makanan berlebih yang masih layak dikonsumsi. Proyek ini menggunakan REST API dengan PostgreSQL sebagai database.
+
+Aplikasi menerapkan autentikasi pengguna, pembagian peran pembeli dan penyedia, serta pembatasan akses berdasarkan kepemilikan data.
+
+## 2. Teknologi
+
+Teknologi yang digunakan dalam proyek ini meliputi:
+
+- Node.js (minimal versi 22)
+- Express.js 5
 - PostgreSQL
 - JavaScript
+- bcryptjs
+- JSON Web Token (JWT)
+- express-rate-limit
+- Helmet
 
-## Persiapan
-1. Pastikan Node.js dan PostgreSQL sudah terpasang.
-2. Instal dependensi dengan perintah `npm install`.
-3. Atur konfigurasi database pada file `.env` berdasarkan `.env.example`.
-4. Jangan membagikan isi file `.env`.
+## 3. Persiapan
 
-## Menjalankan Server
-Jalankan perintah berikut:
+Sebelum menjalankan proyek, pastikan Node.js dan PostgreSQL sudah terpasang.
+
+Instal dependensi dengan perintah:
+
+```bash
+npm install
+```
+
+Selanjutnya, salin file `.env.example` menjadi `.env`.
+
+Sesuaikan konfigurasi database dan isi `JWT_SECRET` menggunakan secret acak yang aman.
+
+**Penting:** Jangan membagikan atau mengunggah file `.env` ke repositori GitHub karena dapat berisi informasi rahasia.
+
+## 4. Migrasi Database
+
+Pastikan database pengembangan `sisabaik_dev` sudah tersedia.
+
+Jalankan migrasi autentikasi dengan perintah:
+
+```bash
+psql -U postgres -d sisabaik_dev -f database/07_auth.sql
+```
+
+Migrasi ini menambahkan kebutuhan penyimpanan hash kata sandi dan versi token tanpa menghapus riwayat data sebelumnya.
+
+## 5. Menjalankan Server
+
+Terdapat dua cara untuk menjalankan server.
+
+**Mode pengembangan:**
 
 ```bash
 npm run dev
 ```
 
-Secara default, API dapat diakses melalui `http://localhost:3000`.
-
-## Endpoint API
-
-### Health Check
-- `GET /api/health` untuk memeriksa status API.
-
-### Penawaran
-- `GET /api/penawaran` untuk melihat daftar penawaran.
-- `GET /api/penawaran/:id` untuk melihat detail penawaran.
-- `POST /api/penawaran` untuk menambahkan penawaran.
-- `PUT /api/penawaran/:id` untuk memperbarui penawaran.
-- `DELETE /api/penawaran/:id` untuk menghapus penawaran.
-
-Daftar penawaran mendukung pencarian, filter, dan paginasi.
-
-### Pesanan
-- `GET /api/pesanan` untuk melihat daftar pesanan.
-- `GET /api/pesanan/:id` untuk melihat detail pesanan.
-- `POST /api/pesanan` untuk membuat pesanan.
-
-Pembuatan pesanan menggunakan transaksi database untuk menjaga konsistensi data dan stok.
-
-## Pengujian API
-Jalankan pengujian dengan perintah:
+**Mode normal:**
 
 ```bash
-npm run api:test
+npm start
 ```
 
-Pengujian dapat mengubah data, jadi gunakan database pengembangan.
+Secara default, aplikasi dapat diakses melalui:
 
-## Catatan
+- Halaman utama: http://localhost:3000
+- Halaman autentikasi: http://localhost:3000/auth.html
+
+## 6. Autentikasi dan Peran Pengguna
+
+SisaBaik memiliki dua jenis pengguna:
+
+**Pembeli**
+
+- Melihat katalog penawaran makanan.
+- Membuat pesanan.
+- Melihat pesanan miliknya sendiri.
+
+**Penyedia**
+
+- Mendaftarkan akun dan profil usaha.
+- Mengelola penawaran setelah profil usahanya diverifikasi.
+- Melihat pesanan yang berkaitan dengan penawarannya.
+
+Penyedia yang baru mendaftar memiliki status `menunggu` sampai disetujui oleh pengelola.
+
+### 6.1 Endpoint Autentikasi
+
+Endpoint autentikasi yang tersedia:
+
+- `POST /api/auth/registrasi` — mendaftarkan akun pembeli.
+- `POST /api/auth/registrasi-penyedia` — mendaftarkan akun penyedia.
+- `POST /api/auth/login` — melakukan login pengguna.
+- `GET /api/auth/saya` — melihat informasi akun yang sedang login.
+- `POST /api/auth/logout` — mengakhiri sesi dan mencabut token yang digunakan.
+
+## 7. Endpoint Bisnis
+
+### 7.1 Penawaran
+
+Endpoint penawaran yang tersedia:
+
+- `GET /api/penawaran` — melihat katalog penawaran publik.
+- `GET /api/penawaran/:id` — melihat detail penawaran.
+- `POST /api/penawaran` — membuat penawaran.
+- `PUT /api/penawaran/:id` — memperbarui penawaran.
+- `DELETE /api/penawaran/:id` — menghapus penawaran.
+- `GET /api/penawaran/milik-saya` — melihat penawaran milik penyedia yang sedang login.
+
+Operasi pengelolaan penawaran hanya dapat dilakukan oleh penyedia yang sudah terverifikasi dan memiliki penawaran tersebut.
+
+### 7.2 Pesanan
+
+Endpoint pesanan yang tersedia:
+
+- `GET /api/pesanan` — melihat daftar pesanan sesuai hak akses pengguna.
+- `GET /api/pesanan/:id` — melihat detail pesanan sesuai hak akses pengguna.
+- `POST /api/pesanan` — membuat pesanan sebagai pembeli.
+
+Identitas pembeli dan penyedia ditentukan oleh server, bukan dipilih melalui field identitas pada request pengguna.
+
+Pembuatan pesanan menggunakan transaksi database untuk menjaga konsistensi stok dan snapshot harga.
+
+## 8. Verifikasi Penyedia
+
+Pengelola dapat memverifikasi penyedia melalui script berikut:
+
+```bash
+npm run penyedia:verifikasi -- email@example.test
+```
+
+Untuk menolak penyedia, gunakan:
+
+```bash
+npm run penyedia:verifikasi -- email@example.test --tolak
+```
+
+Ganti alamat email dengan email akun penyedia yang akan diproses.
+
+Gunakan perintah tersebut hanya pada database praktikum yang sesuai.
+
+## 9. Pengujian
+
+### 9.1 Memeriksa Koneksi Database
+
+Jalankan perintah:
+
+```bash
+npm run db:check
+```
+
+### 9.2 Pengujian Chapter 8
+
+Jalankan pengujian autentikasi dan otorisasi dengan perintah:
+
+```bash
+npm run auth:test
+```
+
+Pengujian menggunakan database pengembangan lokal dan membuat akun, penawaran, serta pesanan uji.
+
+Gunakan data fiktif dan jangan menjalankan pengujian ini pada database produksi.
+
+### 9.3 Pengujian Chapter 7
+
+Pengujian API Chapter 7 dapat dijalankan dengan perintah:
+
+```bash
+npm run api:test:chapter7
+```
+
+Script Chapter 7 menggunakan kontrak sebelum autentikasi sehingga bukan pengujian API untuk Chapter 8.
+
+## 10. Keamanan
+
+Beberapa mekanisme keamanan yang diterapkan dalam aplikasi:
+
+- Kata sandi disimpan dalam bentuk hash.
+- Token JWT diverifikasi oleh server.
+- Logout mencabut sesi melalui perubahan versi token.
+- Akses dibatasi berdasarkan peran dan kepemilikan data.
+- Endpoint autentikasi memiliki pembatasan laju request.
+- Credential, token, dan hash tidak boleh ditampilkan dalam laporan atau diunggah ke repositori.
+
+## 11. Catatan
+
+- Proyek menggunakan data fiktif untuk keperluan praktikum lokal.
 - API menggunakan format JSON.
-- Validasi input dan penanganan kesalahan diterapkan pada endpoint API.
-- File `.env` berisi konfigurasi lokal dan tidak boleh dibagikan ke repositori publik.
-
-- Proyek ini menggunakan data fiktif untuk keperluan praktikum lokal.
-- API belum dilengkapi autentikasi dan belum ditujukan untuk layanan transaksi publik.
-- Data pembeli pada pesanan menggunakan emailPembeli dan penawaranId.
+- Database PostgreSQL mempertahankan riwayat pengembangan Chapter 6 dan Chapter 7.
