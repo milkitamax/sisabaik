@@ -189,3 +189,78 @@ Beberapa mekanisme keamanan yang diterapkan dalam aplikasi:
 - Proyek menggunakan data fiktif untuk keperluan praktikum lokal.
 - API menggunakan format JSON.
 - Database PostgreSQL mempertahankan riwayat pengembangan Chapter 6 dan Chapter 7.
+
+## 12. Antarmuka Vue (Chapter 9)
+
+Chapter 9 mengembangkan antarmuka pengguna SisaBaik menggunakan Vue 3 dan Vite. Antarmuka ini menyediakan tampilan pembeli dan penyedia makanan.
+
+### 12.1 Teknologi Frontend
+
+- Vue 3
+- Vite
+- JavaScript
+- CSS
+- SVG untuk ilustrasi dan ikon.
+
+### 12.2 Struktur Frontend
+
+Folder `frontend` berisi aplikasi Vue dengan struktur sebagai berikut:
+
+- `src/App.vue` — komponen utama aplikasi.
+- `src/components/` — komponen kartu penawaran, filter, formulir, dan ikon.
+- `src/data/` — data latihan penawaran makanan.
+- `src/lib/` — fungsi bantuan untuk format tampilan, visual, dan formulir.
+- `src/assets/` — ilustrasi dan logo aplikasi.
+- `src/style.css` — pengaturan tampilan dan responsivitas.
+
+### 12.3 Menjalankan Frontend
+
+Masuk ke folder frontend:
+
+```bash
+cd frontend
+```
+
+Instal dependensi:
+
+```bash
+npm install
+```
+
+Jalankan aplikasi dalam mode pengembangan:
+
+```bash
+npm run dev
+```
+
+Build aplikasi untuk produksi:
+
+```bash
+npm run build
+```
+
+Jalankan preview hasil build:
+
+```bash
+npm run preview
+```
+
+### 12.4 Fitur Antarmuka
+
+Fitur yang dikembangkan pada Chapter 9 meliputi:
+
+- Katalog makanan untuk pembeli.
+- Pencarian penawaran berdasarkan nama makanan dan penyedia.
+- Filter berdasarkan kategori makanan.
+- Pemilihan penawaran makanan.
+- Mode penyedia untuk mengelola penawaran.
+- Formulir penambahan penawaran baru.
+- Validasi nama, harga, stok, dan tanggal berakhir.
+- Penyaringan penawaran berdasarkan status dan masa kedaluwarsa.
+- Tampilan responsif untuk berbagai ukuran layar.
+
+### 12.5 Catatan Integrasi
+
+Pada tahap Chapter 9, antarmuka Vue masih menggunakan data latihan yang disimpan sementara di memori aplikasi.
+
+Frontend belum terhubung langsung dengan REST API dan database PostgreSQL. Integrasi frontend dengan backend akan dilakukan pada tahap pengembangan berikutnya.

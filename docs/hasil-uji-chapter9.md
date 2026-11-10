@@ -23,8 +23,8 @@
 10. **Penawaran baru di mode pembeli:** Berhasil. Penawaran baru muncul di katalog pembeli.
 11. **Perpindahan mode:** Berhasil. Penawaran baru tetap muncul ketika berpindah antara mode pembeli dan penyedia.
 12. **Refresh website:** Berhasil. Setelah halaman diperbarui, data kembali ke data awal karena penawaran latihan hanya disimpan sementara di memori aplikasi.
-13. **Responsivitas dan aksesibilitas:** Belum dicatat.
-14. **Masa kedaluwarsa penawaran:** Belum dicatat.
+13. **Responsivitas dan aksesibilitas:** Berhasil. Tampilan diuji pada ukuran layar HP, tablet, dan laptop. Navigasi menggunakan keyboard juga diperiksa.
+14. **Masa kedaluwarsa penawaran:** Berhasil. Nasi Padang Hemat otomatis menghilang setelah masa berlakunya habis. Penawaran lain tetap tersedia.
 15. **Build produksi:** Berhasil. Seluruh proses build selesai tanpa error.
 16. **Preview produksi:** Berhasil. Website dapat dibuka melalui server preview Vite.
 
