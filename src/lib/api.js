@@ -7,7 +7,7 @@ export class HttpError extends Error {
 }
 
 export const salah = (pesan) => {
-  throw new HttpError(400, "VALIDATION ERROR", pesan);
+  throw new HttpError(400, "VALIDATION_ERROR", pesan);
 };
 
 export function idValid(nilai, nama = "id") {
@@ -107,12 +107,17 @@ export function penawaranValid(body) {
     penyediaId: idValid(body.penyediaId, "penyediaId"),
     nama: teksValid(body.nama, "nama", 3, 120),
     kategori: teksValid(body.kategori, "kategori", 1, 40),
-    hargaNormal: angkaValid(body.hargaNormal, "hargaNormal", 1, 999999999999),
+    hargaNormal: angkaValid(
+      body.hargaNormal,
+      "hargaNormal",
+      1,
+      999999999999,
+    ),
     hargaPenawaran: angkaValid(
       body.hargaPenawaran,
       "hargaPenawaran",
       0,
-      999999999999
+      999999999999,
     ),
     stok: angkaValid(body.stok, "stok", 0, 2147483647),
     satuan: teksValid(body.satuan, "satuan", 1, 20),
@@ -126,8 +131,8 @@ export function penawaranValid(body) {
   }
   const waktu = teksValid(body.berakhirPada, "berakhirPada", 20, 35);
   const polaWaktu = new RegExp(
-    `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}` +
-    `(\\.\\d{1,3})?(Z|[+-]\\d{2}:\\d{2})$`
+    String.raw`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}` +
+      String.raw`(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})$`,
   );
   if (!polaWaktu.test(waktu)) {
     salah("berakhirPada wajib ISO 8601 dengan zona waktu.");
@@ -136,7 +141,7 @@ export function penawaranValid(body) {
   const bulan = Number(waktu.slice(5, 7));
   const hari = Number(waktu.slice(8, 10));
   const kabisat =
-    (tahun % 4 === 0 && tahun % 100 !== 0) || tahun % 400 === 0;
+    tahun % 4 === 0 && (tahun % 100 !== 0 || tahun % 400 === 0);
   const hariBulan = [
     31,
     kabisat ? 29 : 28,
@@ -191,7 +196,7 @@ export function pesananValid(body) {
     return { penawaranId, kuantitas };
   });
   items.sort((a, b) =>
-    BigInt(a.penawaranId) < BigInt(b.penawaranId) ? -1 : 1
+    BigInt(a.penawaranId) < BigInt(b.penawaranId) ? -1 : 1,
   );
   return { emailPembeli, items };
 }

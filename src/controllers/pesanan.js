@@ -1,6 +1,6 @@
 import * as service from "../services/pesanan.js";
 import { idValid, halamanValid } from "../lib/api.js";
-import { pesananSesiValid } from "../lib/input-auth.js";
+import { pesananSesiValid, aksiPesananValid } from "../lib/input-auth.js";
 
 export async function daftar(req, res) {
   const hasil = await service.daftarPesanan(
@@ -9,7 +9,6 @@ export async function daftar(req, res) {
   );
   return res.json({ success: true, ...hasil });
 }
-
 export async function detail(req, res) {
   const hasil = await service.detailPesanan(
     idValid(req.params.id),
@@ -17,7 +16,6 @@ export async function detail(req, res) {
   );
   return res.json({ success: true, data: hasil });
 }
-
 export async function buat(req, res) {
   const hasil = await service.buatPesanan(
     pesananSesiValid(req.body, req.pengguna),
@@ -27,4 +25,12 @@ export async function buat(req, res) {
     .status(201)
     .location(`/api/pesanan/${hasil.id}`)
     .json({ success: true, data: hasil });
+}
+export async function aksi(req, res) {
+  const hasil = await service.prosesPesanan(
+    idValid(req.params.id),
+    aksiPesananValid(req.body),
+    req.pengguna,
+  );
+  return res.json({ success: true, data: hasil });
 }

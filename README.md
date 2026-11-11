@@ -261,6 +261,69 @@ Fitur yang dikembangkan pada Chapter 9 meliputi:
 
 ### 12.5 Catatan Integrasi
 
-Pada tahap Chapter 9, antarmuka Vue masih menggunakan data latihan yang disimpan sementara di memori aplikasi.
+Pada Chapter 10, antarmuka Vue 3 telah diintegrasikan dengan REST API menggunakan Express.js dan database PostgreSQL. Integrasi ini memungkinkan frontend mengambil dan mengirim data melalui endpoint API yang tersedia.
 
-Frontend belum terhubung langsung dengan REST API dan database PostgreSQL. Integrasi frontend dengan backend akan dilakukan pada tahap pengembangan berikutnya.
+Frontend menggunakan Vue Router untuk mengatur navigasi antarhalaman dan mengelola akses berdasarkan peran pengguna. Pada mode pengembangan, Vite menggunakan proxy agar permintaan dengan awalan `/api` diteruskan ke backend pada port 3000.
+
+### 12.6 Fitur Integrasi Full Stack
+
+Fitur integrasi yang tersedia meliputi:
+
+- Login dan registrasi pengguna sebagai pembeli maupun penyedia.
+- Pengelolaan sesi pengguna.
+- Katalog penawaran makanan yang terhubung dengan API.
+- Pengelolaan penawaran oleh penyedia.
+- Pengelolaan dan pemantauan pesanan.
+- Dashboard pembeli dan penyedia.
+- Penggunaan PostgreSQL untuk menyimpan data aplikasi.
+- Build frontend menggunakan Vite untuk kebutuhan production.
+
+### 12.7 Menjalankan Aplikasi
+
+**Mode pengembangan**
+
+Jalankan backend dari folder utama:
+
+```bash
+npm run dev
+```
+
+Jalankan frontend dari folder utama melalui terminal lain:
+
+```bash
+npm --prefix frontend run dev
+```
+
+Frontend dapat diakses melalui:
+
+`http://127.0.0.1:5173/`
+
+**Mode production lokal**
+
+Build frontend terlebih dahulu:
+
+```bash
+npm run build
+```
+
+Kemudian jalankan aplikasi:
+
+```bash
+npm run start:local
+```
+
+Aplikasi dapat diakses melalui:
+
+`http://127.0.0.1:3000/`
+
+Pada mode ini, frontend hasil build dan backend Express disajikan melalui satu layanan lokal.
+
+### 12.8 Hasil Pengerjaan dan Batasan Pengujian
+
+Berdasarkan pengerjaan Chapter 10, frontend berhasil dijalankan menggunakan Vite dan berhasil dibangun untuk kebutuhan production. Login pembeli dan penyedia juga telah dicoba melalui browser, serta navigasi menuju halaman dashboard berhasil ditampilkan.
+
+Pengujian build production lokal berhasil dilakukan dengan menjalankan aplikasi melalui `npm run start:local` dan mengaksesnya melalui `localhost:3000`.
+
+Pengujian transaksi lengkap, termasuk pembatalan pesanan, perubahan stok, pembayaran saat pengambilan, dan perhitungan dashboard berdasarkan transaksi selesai, belum dilakukan secara menyeluruh.
+
+Aplikasi masih memiliki beberapa batasan, yaitu belum menggunakan payment gateway, belum menyediakan fitur reset kata sandi dan verifikasi email, serta belum menerapkan pembaruan data secara real-time.

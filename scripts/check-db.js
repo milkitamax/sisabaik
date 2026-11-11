@@ -29,4 +29,3 @@ if (!Number.isInteger(stokMinimum) || stokMinimum < 0) {
     await pool.end();
   }
 }
-

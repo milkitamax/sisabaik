@@ -1,13 +1,12 @@
-const secret = process.env.JWT_SECRET ?? "";
-
-if (!/^[a-f0-9]{64}$/i.test(secret)) {
-  throw new Error("JWT_SECRET harus berupa 32 byte acak dalam format hex.");
+const hex = process.env.JWT_SECRET ?? "";
+if (!/^[a-f0-9]{64}$/.test(hex)) {
+  throw new Error("JWT_SECRET wajib 64 digit hex acak pada .env.");
 }
 
 export const authConfig = Object.freeze({
-  secret,
+  secret: Buffer.from(hex, "hex"),
   issuer: "sisabaik-api",
-  audience: "sisabaik-client",
-  ttl: "15m",
+  audience: "sisabaik-web",
+  ttl: 15 * 60,
   cost: 12,
 });

@@ -21,7 +21,6 @@ export function verifikasiToken(token) {
       issuer: authConfig.issuer,
       audience: authConfig.audience,
     });
-
     if (
       !p ||
       typeof p !== "object" ||
@@ -34,11 +33,9 @@ export function verifikasiToken(token) {
     ) {
       throw new Error("Invalid claims");
     }
-
     return p;
   } catch (error) {
     const expired = error.name === "TokenExpiredError";
-
     throw new HttpError(
       401,
       expired ? "TOKEN_EXPIRED" : "TOKEN_INVALID",
